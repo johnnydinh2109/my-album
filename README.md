@@ -15,23 +15,34 @@ Yêu cầu **Node.js 22 LTS**.
 
 ```powershell
 cd my-album
-Copy-Item .env.example .env
-notepad .env
 npm install
+npm run setup
+notepad .env
 npm run dev
 ```
 
 Mở `http://localhost:5173`.
 
-Trong `.env`, sửa ít nhất:
+`npm run setup` sẽ tạo `.env` từ `.env.example`, rồi tự thay `BOOTSTRAP_SETUP_CODE` và `JWT_SECRET` mẫu bằng chuỗi ngẫu nhiên an toàn. Script không in secret ra terminal và không ghi đè secret thật đã tồn tại.
+
+Trong `.env`, bạn chỉ cần sửa thông tin ổ ảnh và email:
 
 ```env
 PHOTOS_ROOT=D:/photos
 BOOTSTRAP_ADMIN_EMAIL=email-cua-ban@example.com
 BOOTSTRAP_ADMIN_FOLDER=admin
-BOOTSTRAP_SETUP_CODE=mot-ma-bi-mat
-JWT_SECRET=mot-chuoi-ngau-nhien-rat-dai
 ```
+
+### Các script quản lý secret
+
+```powershell
+npm run setup           # tạo .env nếu chưa có và thay các secret mẫu
+npm run env:init        # tương đương npm run setup
+npm run env:check       # kiểm tra .env đã có secret an toàn chưa
+npm run secrets:rotate  # tạo lại cả hai secret
+```
+
+Sau khi chạy `secrets:rotate`, các phiên đăng nhập JWT hiện tại sẽ hết hiệu lực và người dùng cần đăng nhập lại.
 
 > Dùng `D:/photos` (dấu `/`) trong `.env`. Không dùng `D:\photos` vì dấu `\` có thể bị hiểu là ký tự escape.
 
