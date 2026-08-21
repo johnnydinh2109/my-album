@@ -8,8 +8,10 @@ import { config } from './config.js'
 import type { MediaDoc, UserDoc } from './db.js'
 import { resolveOwned } from './media.js'
 
+const require = createRequire(import.meta.url)
 const run = promisify(execFile)
-const ffmpegStatic = createRequire(import.meta.url)('ffmpeg-static') as string | null
+const ffmpegStatic = require('ffmpeg-static') as string | null
+const heicConvert = require('heic-convert') as (options: { buffer: Buffer; format: 'JPEG' | 'PNG'; quality?: number }) => Promise<Buffer>
 const generating = new Map<string, Promise<string>>()
 const videoWaiters: Array<() => void> = []
 let activeVideoJobs = 0
@@ -29,12 +31,20 @@ async function withVideoSlot<T>(task: () => Promise<T>) {
     videoWaiters.shift()?.()
   }
 }
-async function makeImageThumbnail(source: string, output: string, size: number) {
-  await sharp(source, { animated: false })
+async function makeImageVariant(source: string, output: string, size: number, quality: number, isHeic: boolean) {
+  const convert = (input: string | Buffer) => sharp(input, { animated: false, failOn: 'none' })
     .rotate()
     .resize({ width: size, height: size, fit: 'inside', withoutEnlargement: true })
-    .webp({ quality: 78, effort: 4 })
+    .webp({ quality, effort: 4 })
     .toFile(output)
+  try {
+    await convert(source)
+  } catch (error) {
+    if (!isHeic) throw error
+    // Một số bản libvips không có codec HEIC. libheif-js là fallback thuần JS.
+    const jpeg = await heicConvert({ buffer: await fs.readFile(source), format: 'JPEG', quality: 0.92 })
+    await convert(jpeg)
+  }
 }
 async function makeVideoThumbnail(source: string, output: string, size: number) {
   const ffmpeg = process.env.FFMPEG_PATH || ffmpegStatic
@@ -73,7 +83,31 @@ export async function getThumbnail(user: UserDoc, item: MediaDoc, requestedSize:
     try {
       const source = resolveOwned(user, item.relative_path)
       if (item.mime.startsWith('video/')) await withVideoSlot(() => makeVideoThumbnail(source, temporary, size))
-      else await makeImageThumbnail(source, temporary, size)
+      else await makeImageVariant(source, temporary, size, 78, item.mime === 'image/heic')
+      await fs.rename(temporary, output)
+      return output
+    } catch (error) {
+      await fs.rm(temporary, { force: true }).catch(() => {})
+      throw error
+    }
+  })().finally(() => generating.delete(output))
+
+  generating.set(output, job)
+  return job
+}
+
+export async function getBrowserPreview(user: UserDoc, item: MediaDoc) {
+  const version = Number.isFinite(Date.parse(item.modified_at)) ? Date.parse(item.modified_at) : 0
+  const output = path.join(config.thumbnailCacheRoot, user.id, `${item.id}-${version}-preview.webp`)
+  if (await exists(output)) return output
+  const current = generating.get(output)
+  if (current) return current
+
+  const job = (async () => {
+    await fs.mkdir(path.dirname(output), { recursive: true })
+    const temporary = `${output}.${process.pid}.${Date.now()}.tmp`
+    try {
+      await makeImageVariant(resolveOwned(user, item.relative_path), temporary, 2560, 88, item.mime === 'image/heic')
       await fs.rename(temporary, output)
       return output
     } catch (error) {

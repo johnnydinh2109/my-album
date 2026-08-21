@@ -11,7 +11,7 @@ import { config } from './config.js'
 import { albumMedia, albums, dbReady, media, safeUserFolder, users } from './db.js'
 import { requireAuth, setSession } from './auth.js'
 import { allowedExt, resolveOwned, syncMedia, userRoot } from './media.js'
-import { deleteThumbnails, getThumbnail } from './thumbnails.js'
+import { deleteThumbnails, getBrowserPreview, getThumbnail } from './thumbnails.js'
 
 const app = express()
 app.disable('x-powered-by')
@@ -59,6 +59,14 @@ app.get('/api/media/:id/thumbnail', requireAuth, asyncRoute(async (req: any, res
   const thumbnail = await getThumbnail(req.user, row, Number.isFinite(size) ? size : 640)
   res.setHeader('Cache-Control', 'private, max-age=31536000, immutable')
   res.type('image/webp').sendFile(thumbnail)
+}))
+app.get('/api/media/:id/preview', requireAuth, asyncRoute(async (req: any, res: any) => {
+  const row = await media.findOne({ id: req.params.id, user_id: req.user.id })
+  if (!row) return res.sendStatus(404)
+  if (!row.mime.startsWith('image/')) return res.status(415).json({ error: 'Tệp này không phải hình ảnh' })
+  const preview = await getBrowserPreview(req.user, row)
+  res.setHeader('Cache-Control', 'private, max-age=31536000, immutable')
+  res.type('image/webp').sendFile(preview)
 }))
 app.get('/api/media/:id/file', requireAuth, asyncRoute(async (req: any, res: any) => {
   const row = await media.findOne({ id: req.params.id, user_id: req.user.id })

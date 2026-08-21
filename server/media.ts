@@ -6,7 +6,7 @@ import { config } from './config.js'
 
 export const allowedExt = new Map([
   ['.jpg','image/jpeg'],['.jpeg','image/jpeg'],['.png','image/png'],['.webp','image/webp'],['.gif','image/gif'],
-  ['.heic','image/heic'],['.avif','image/avif'],['.mp4','video/mp4'],['.mov','video/quicktime'],['.webm','video/webm']
+  ['.heic','image/heic'],['.heif','image/heic'],['.avif','image/avif'],['.mp4','video/mp4'],['.mov','video/quicktime'],['.webm','video/webm']
 ])
 export function userRoot(user: UserDoc) {
   const full = path.resolve(config.photosRoot, user.media_folder)

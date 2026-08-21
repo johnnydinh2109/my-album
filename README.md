@@ -101,8 +101,18 @@ Bạn cũng có thể kiểm tra riêng MongoDB bằng `npm run mongo:check`. Sa
 - Yêu thích
 - Tạo album, chọn nhiều ảnh và thêm vào album
 - Upload tối đa 50 file/lần, 500 MB/file
+- Kéo-thả ảnh/video vào trang hoặc dán ảnh từ clipboard bằng `Ctrl+V`
+- Hỗ trợ `.heic`/`.heif`: thumbnail và ảnh xem được chuyển sang WebP, file gốc giữ nguyên
 - Xem ảnh/video toàn màn hình
 - Chọn nhiều và xóa vĩnh viễn khỏi ổ đĩa
+
+## HEIC và các cách upload
+
+- Chọn file bằng nút **Tải lên**.
+- Kéo nhiều ảnh/video từ File Explorer và thả vào bất kỳ vị trí nào trên trang.
+- Copy ảnh hoặc chụp màn hình, sau đó nhấn `Ctrl+V` khi đang mở My Album.
+- Với HEIC/HEIF, server thử Sharp trước và tự fallback sang `libheif-js` nếu máy không có codec HEIC.
+- Ảnh HEIC gốc không bị thay đổi. Lưới dùng thumbnail WebP; chế độ toàn màn hình dùng preview WebP tối đa 2560 px.
 
 ## Chuyển từ bản SQLite cũ
 
