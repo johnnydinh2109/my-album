@@ -8,7 +8,7 @@ declare global { namespace Express { interface Request { user?: UserDoc } } }
 
 export function setSession(res: Response, userId: string) {
   const token = jwt.sign({ sub: userId } satisfies Claims, config.jwtSecret, { expiresIn: '30d' })
-  res.cookie('my_album_session', token, { httpOnly: true, sameSite: 'strict', secure: config.production, maxAge: 30 * 86400_000, path: '/' })
+  res.cookie('my_album_session', token, { httpOnly: true, sameSite: 'strict', secure: config.cookieSecure, maxAge: 30 * 86400_000, path: '/' })
 }
 export async function requireAuth(req: Request, res: Response, next: NextFunction) {
   try {

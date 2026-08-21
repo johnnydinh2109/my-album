@@ -12,6 +12,7 @@
     "env:check": "node scripts/setup-env.mjs check",
     "secrets:rotate": "node scripts/setup-env.mjs rotate",
     "mongo:check": "node scripts/check-mongodb.mjs",
+    "lan:info": "node scripts/lan-info.mjs",
     "dev": "concurrently -n api,web -c green,cyan \"tsx watch server/index.ts\" \"vite --host 0.0.0.0\"",
     "build": "tsc -p tsconfig.server.json && vite build",
     "prestart": "npm run build && npm run mongo:check",

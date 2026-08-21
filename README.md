@@ -33,6 +33,7 @@ MONGODB_URI=mongodb://127.0.0.1:27017
 MONGODB_DB=my_album
 PHOTOS_ROOT=D:/photos
 THUMBNAIL_CACHE_ROOT=./data/thumbnails
+COOKIE_SECURE=false
 ```
 
 Nếu dùng MongoDB Atlas, thay `MONGODB_URI` bằng connection string Atlas. Không commit connection string vào GitHub.
@@ -123,6 +124,36 @@ Start-Service MongoDB
 ```
 
 Nếu nhận lỗi `ECONNREFUSED 127.0.0.1:27017`, MongoDB chưa được cài/chưa chạy hoặc `MONGODB_URI` chưa đúng.
+
+## Sử dụng trong mạng LAN
+
+Server đã lắng nghe trên `0.0.0.0`, vì vậy không cần sửa code để dùng trong LAN.
+
+1. Đảm bảo `.env` có `COOKIE_SECURE=false` khi dùng HTTP nội bộ.
+2. Khởi động ứng dụng bằng `npm start`.
+3. Xem địa chỉ LAN bằng:
+
+```powershell
+npm run lan:info
+```
+
+Hoặc dùng PowerShell:
+
+```powershell
+Get-NetIPConfiguration | Where-Object IPv4DefaultGateway
+```
+
+Từ điện thoại/máy tính cùng Wi-Fi, mở địa chỉ được in ra, ví dụ `http://192.168.1.50:3001`.
+
+Nếu không kết nối được, mở PowerShell bằng **Run as Administrator** và cho phép cổng 3001 qua Windows Firewall:
+
+```powershell
+New-NetFirewallRule -DisplayName "My Album LAN" -Direction Inbound -Action Allow -Protocol TCP -LocalPort 3001 -Profile Private
+```
+
+Kiểm tra mạng Windows đang ở profile `Private` bằng `Get-NetConnectionProfile`. Một số router có tính năng AP/Client Isolation; cần tắt tính năng đó để các thiết bị Wi-Fi nhìn thấy nhau.
+
+> Không port-forward cổng 3001 trực tiếp ra Internet. Nếu triển khai Internet, dùng HTTPS reverse proxy và đặt `COOKIE_SECURE=true`.
 
 ## Lưu ý an toàn
 
