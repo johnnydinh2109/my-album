@@ -54,7 +54,7 @@ app.get('/api/media', requireAuth, asyncRoute(async (req: any, res: any) => {
 app.get('/api/media/:id/thumbnail', requireAuth, asyncRoute(async (req: any, res: any) => {
   const row = await media.findOne({ id: req.params.id, user_id: req.user.id })
   if (!row) return res.sendStatus(404)
-  if (!row.mime.startsWith('image/')) return res.status(415).json({ error: 'Tệp này không phải hình ảnh' })
+  if (!row.mime.startsWith('image/') && !row.mime.startsWith('video/')) return res.status(415).json({ error: 'Không hỗ trợ thumbnail cho tệp này' })
   const size = Number(req.query.size || 640)
   const thumbnail = await getThumbnail(req.user, row, Number.isFinite(size) ? size : 640)
   res.setHeader('Cache-Control', 'private, max-age=31536000, immutable')

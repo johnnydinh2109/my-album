@@ -7,6 +7,7 @@ Web thư viện ảnh riêng tư kiểu Google Photos, chạy native trên Windo
 - React + Vite + TypeScript
 - Node.js + Express
 - MongoDB (official Node.js driver)
+- Sharp + FFmpeg để tạo thumbnail ảnh và poster video
 - Argon2 (băm mật khẩu), JWT trong cookie HttpOnly
 
 ## Cài trên Windows
