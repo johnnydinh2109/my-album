@@ -31,6 +31,7 @@ Trong `.env`, cấu hình MongoDB, ổ ảnh và email:
 MONGODB_URI=mongodb://127.0.0.1:27017
 MONGODB_DB=my_album
 PHOTOS_ROOT=D:/photos
+THUMBNAIL_CACHE_ROOT=./data/thumbnails
 ```
 
 Nếu dùng MongoDB Atlas, thay `MONGODB_URI` bằng connection string Atlas. Không commit connection string vào GitHub.
@@ -92,6 +93,8 @@ Bạn cũng có thể kiểm tra riêng MongoDB bằng `npm run mongo:check`. Sa
 - Đăng ký, đăng nhập, đăng xuất
 - Tự quét ảnh/video đã có trong folder riêng
 - Timeline theo ngày
+- Thumbnail WebP 320/640/960 px, tạo theo nhu cầu và cache trên ổ đĩa
+- Chỉ tải ảnh gốc khi mở chế độ xem toàn màn hình
 - Tìm theo tên file
 - Yêu thích
 - Tạo album, chọn nhiều ảnh và thêm vào album
@@ -126,3 +129,4 @@ Nếu nhận lỗi `ECONNREFUSED 127.0.0.1:27017`, MongoDB chưa được cài/c
 - Nếu mở ra Internet, đặt sau HTTPS reverse proxy, thêm rate-limit đăng nhập, xác minh email, CSRF token và backup định kỳ.
 - Việc xóa trong web là **xóa vĩnh viễn**, không đưa vào Recycle Bin.
 - Sao lưu `D:\photos` và database MongoDB `my_album`.
+- `data\thumbnails` chỉ là cache, có thể xóa an toàn; ứng dụng sẽ tự tạo lại khi cần.

@@ -11,6 +11,7 @@ import { config } from './config.js'
 import { albumMedia, albums, dbReady, media, safeUserFolder, users } from './db.js'
 import { requireAuth, setSession } from './auth.js'
 import { allowedExt, resolveOwned, syncMedia, userRoot } from './media.js'
+import { deleteThumbnails, getThumbnail } from './thumbnails.js'
 
 const app = express()
 app.disable('x-powered-by')
@@ -50,6 +51,15 @@ app.get('/api/media', requireAuth, asyncRoute(async (req: any, res: any) => {
   if (favorite) filter.favorite = 1
   res.json({ items: await media.find(filter).sort({ taken_at: -1 }).toArray() })
 }))
+app.get('/api/media/:id/thumbnail', requireAuth, asyncRoute(async (req: any, res: any) => {
+  const row = await media.findOne({ id: req.params.id, user_id: req.user.id })
+  if (!row) return res.sendStatus(404)
+  if (!row.mime.startsWith('image/')) return res.status(415).json({ error: 'Tệp này không phải hình ảnh' })
+  const size = Number(req.query.size || 640)
+  const thumbnail = await getThumbnail(req.user, row, Number.isFinite(size) ? size : 640)
+  res.setHeader('Cache-Control', 'private, max-age=31536000, immutable')
+  res.type('image/webp').sendFile(thumbnail)
+}))
 app.get('/api/media/:id/file', requireAuth, asyncRoute(async (req: any, res: any) => {
   const row = await media.findOne({ id: req.params.id, user_id: req.user.id })
   if (!row) return res.sendStatus(404)
@@ -63,7 +73,7 @@ app.delete('/api/media/:id', requireAuth, asyncRoute(async (req: any, res: any) 
   const row = await media.findOne({ id: req.params.id, user_id: req.user.id })
   if (!row) return res.sendStatus(404)
   fs.unlinkSync(resolveOwned(req.user, row.relative_path))
-  await Promise.all([media.deleteOne({ id: row.id }), albumMedia.deleteMany({ media_id: row.id })])
+  await Promise.all([media.deleteOne({ id: row.id }), albumMedia.deleteMany({ media_id: row.id }), deleteThumbnails(req.user, row.id)])
   res.json({ ok: true })
 }))
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 500 * 1024 * 1024, files: 50 } })
