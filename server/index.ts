@@ -17,14 +17,13 @@ app.disable('x-powered-by')
 app.use(express.json({ limit: '1mb' }))
 app.use(cookieParser())
 const asyncRoute = (fn: any) => (req: any, res: any, next: any) => Promise.resolve(fn(req, res, next)).catch(next)
-const authSchema = z.object({ email: z.string().email(), password: z.string().min(8).max(128), name: z.string().trim().min(2).max(60).optional(), setupCode: z.string().optional() })
+const authSchema = z.object({ email: z.string().email(), password: z.string().min(8).max(128), name: z.string().trim().min(2).max(60).optional() })
 
 app.post('/api/auth/register', asyncRoute(async (req: any, res: any) => {
   await dbReady
-  const input = authSchema.parse(req.body), email = input.email.toLowerCase(), isBootstrap = email === config.adminEmail
-  if (isBootstrap && config.setupCode && input.setupCode !== config.setupCode) return res.status(403).json({ error: 'Mã thiết lập không đúng' })
+  const input = authSchema.parse(req.body), email = input.email.toLowerCase()
   if (await users.findOne({ email })) return res.status(409).json({ error: 'Email đã được sử dụng' })
-  const folder = safeUserFolder(isBootstrap ? config.adminFolder : uuid()), id = uuid()
+  const folder = safeUserFolder(uuid()), id = uuid()
   if (await users.findOne({ media_folder: folder })) return res.status(409).json({ error: 'Thư mục ảnh đã được gán' })
   const hash = await argon2.hash(input.password)
   fs.mkdirSync(path.join(config.photosRoot, folder), { recursive: true })

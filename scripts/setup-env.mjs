@@ -40,7 +40,7 @@ if (mode === 'check') {
     process.exit(1)
   }
   const values = readValues(readFileSync(envPath, 'utf8'))
-  const invalid = ['BOOTSTRAP_SETUP_CODE', 'JWT_SECRET'].filter(key => placeholders.has(values[key] || ''))
+  const invalid = ['JWT_SECRET'].filter(key => placeholders.has(values[key] || ''))
   if (invalid.length) {
     console.error(`Secret chưa an toàn: ${invalid.join(', ')}. Chạy: npm run secrets:rotate`)
     process.exit(1)
@@ -77,11 +77,16 @@ for (const [key, value] of Object.entries(exampleValues)) {
   }
 }
 
-if (rotate || placeholders.has(values.BOOTSTRAP_SETUP_CODE || '')) {
-  text = replaceValue(text, 'BOOTSTRAP_SETUP_CODE', secret(24))
-  changed = true
-  secretChanged = true
+// Xóa cấu hình bootstrap/admin cũ vì mọi tài khoản giờ đều bình đẳng.
+for (const key of ['BOOTSTRAP_ADMIN_EMAIL', 'BOOTSTRAP_ADMIN_FOLDER', 'BOOTSTRAP_SETUP_CODE']) {
+  const pattern = new RegExp(`^${key}=.*\\r?\\n?`, 'm')
+  if (pattern.test(text)) {
+    text = text.replace(pattern, '')
+    changed = true
+    configAdded = true
+  }
 }
+
 if (rotate || placeholders.has(values.JWT_SECRET || '')) {
   text = replaceValue(text, 'JWT_SECRET', secret(48))
   changed = true
@@ -90,9 +95,9 @@ if (rotate || placeholders.has(values.JWT_SECRET || '')) {
 
 if (changed) {
   writeFileSync(envPath, text, { mode: 0o600 })
-  if (configAdded) console.log('Đã bổ sung các cấu hình mới còn thiếu từ .env.example.')
-  if (secretChanged) console.log(rotate ? 'Đã xoay BOOTSTRAP_SETUP_CODE và JWT_SECRET.' : 'Đã tự động tạo BOOTSTRAP_SETUP_CODE và JWT_SECRET.')
+  if (configAdded) console.log('Đã đồng bộ các cấu hình với .env.example.')
+  if (secretChanged) console.log(rotate ? 'Đã xoay JWT_SECRET.' : 'Đã tự động tạo JWT_SECRET.')
 } else {
-  console.log('Các secret đã tồn tại; không thay đổi. Dùng npm run secrets:rotate nếu muốn tạo lại.')
+  console.log('JWT_SECRET đã tồn tại; không thay đổi. Dùng npm run secrets:rotate nếu muốn tạo lại.')
 }
 console.log('Giá trị secret không được in ra terminal. File .env đang được Git bỏ qua.')

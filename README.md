@@ -23,7 +23,7 @@ npm run dev
 
 Mở `http://localhost:5173`.
 
-`npm run setup` sẽ tạo `.env` từ `.env.example`, rồi tự thay `BOOTSTRAP_SETUP_CODE` và `JWT_SECRET` mẫu bằng chuỗi ngẫu nhiên an toàn. Script không in secret ra terminal và không ghi đè secret thật đã tồn tại.
+`npm run setup` sẽ tạo `.env` từ `.env.example`, rồi tự thay `JWT_SECRET` mẫu bằng chuỗi ngẫu nhiên an toàn. Script không in secret ra terminal và không ghi đè secret thật đã tồn tại.
 
 Trong `.env`, cấu hình MongoDB, ổ ảnh và email:
 
@@ -31,8 +31,6 @@ Trong `.env`, cấu hình MongoDB, ổ ảnh và email:
 MONGODB_URI=mongodb://127.0.0.1:27017
 MONGODB_DB=my_album
 PHOTOS_ROOT=D:/photos
-BOOTSTRAP_ADMIN_EMAIL=email-cua-ban@example.com
-BOOTSTRAP_ADMIN_FOLDER=admin
 ```
 
 Nếu dùng MongoDB Atlas, thay `MONGODB_URI` bằng connection string Atlas. Không commit connection string vào GitHub.
@@ -43,31 +41,35 @@ Nếu dùng MongoDB Atlas, thay `MONGODB_URI` bằng connection string Atlas. Kh
 npm run setup           # tạo .env nếu chưa có và thay các secret mẫu
 npm run env:init        # tương đương npm run setup
 npm run env:check       # kiểm tra .env đã có secret an toàn chưa
-npm run secrets:rotate  # tạo lại cả hai secret
+npm run secrets:rotate  # tạo lại JWT_SECRET
 ```
 
 Sau khi chạy `secrets:rotate`, các phiên đăng nhập JWT hiện tại sẽ hết hiệu lực và người dùng cần đăng nhập lại.
 
 > Dùng `D:/photos` (dấu `/`) trong `.env`. Không dùng `D:\photos` vì dấu `\` có thể bị hiểu là ký tự escape.
 
-## Dùng ngay ảnh đang có trong `D:\photos\admin`
+## Thư mục ảnh của từng tài khoản
 
-1. **Không cần đổi tên folder `admin`.**
-2. Đặt email của bạn vào `BOOTSTRAP_ADMIN_EMAIL` và giữ `BOOTSTRAP_ADMIN_FOLDER=admin`.
-3. Khởi động web, chọn **Đăng ký**.
-4. Đăng ký đúng email trên và nhập `BOOTSTRAP_SETUP_CODE`.
-5. Sau khi đăng ký, web tự quét `D:\photos\admin` và hiển thị ảnh/video.
-
-Mỗi tài khoản khác được tạo một folder UUID riêng, ví dụ:
+Mọi tài khoản đều bình đẳng, không còn tài khoản admin hoặc mã thiết lập. Khi đăng ký, hệ thống tự tạo một thư mục UUID riêng, ví dụ:
 
 ```text
 D:\photos\
-├── admin\                       # chỉ tài khoản của bạn
-├── 05ca3f6e-...\                # user khác
-└── e2478fde-...\                # user khác nữa
+├── 05ca3f6e-...\                # tài khoản thứ nhất
+├── e2478fde-...\                # tài khoản thứ hai
+└── a341bc20-...\                # tài khoản thứ ba
 ```
 
-Không user nào có endpoint truy cập folder của user khác. Backend kiểm tra quyền sở hữu trước khi trả file.
+Tên folder của tài khoản đang đăng nhập được hiển thị ở cuối thanh bên trái trong mục **THƯ MỤC CỦA BẠN**.
+
+Để chuyển ảnh cũ:
+
+1. Đăng ký tài khoản mới.
+2. Upload thử một ảnh.
+3. Xem tên folder UUID trên thanh bên hoặc tìm file vừa upload trong `D:\photos`.
+4. Di chuyển ảnh cũ vào đúng folder UUID đó.
+5. Tải lại trang; ứng dụng sẽ tự quét và hiển thị ảnh.
+
+Bạn cũng có thể chuyển toàn bộ nội dung từ `D:\photos\admin` sang folder UUID mới. Không user nào có endpoint truy cập folder của user khác; backend luôn kiểm tra quyền sở hữu trước khi trả file.
 
 ## Chạy production
 
