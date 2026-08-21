@@ -72,9 +72,10 @@ Không user nào có endpoint truy cập folder của user khác. Backend kiểm
 ## Chạy production
 
 ```powershell
-$env:NODE_ENV="production"
 npm start
 ```
+
+Không cần tự đặt `NODE_ENV`; script start sẽ tự bật production trên Windows, build ứng dụng và phục vụ cả frontend lẫn API.
 
 `npm start` sẽ tự động:
 

@@ -15,7 +15,7 @@
     "dev": "concurrently -n api,web -c green,cyan \"tsx watch server/index.ts\" \"vite --host 0.0.0.0\"",
     "build": "tsc -p tsconfig.server.json && vite build",
     "prestart": "npm run build && npm run mongo:check",
-    "start": "node build-server/index.js",
+    "start": "node scripts/start.mjs",
     "typecheck": "tsc --noEmit && tsc -p tsconfig.server.json --noEmit"
   },
   "dependencies": {
