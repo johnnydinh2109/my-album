@@ -69,15 +69,20 @@ D:\photos\
 
 Không user nào có endpoint truy cập folder của user khác. Backend kiểm tra quyền sở hữu trước khi trả file.
 
-## Build để chạy ổn định
+## Chạy production
 
 ```powershell
-npm run build
 $env:NODE_ENV="production"
 npm start
 ```
 
-Mở `http://localhost:3001`. Có thể dùng Task Scheduler hoặc NSSM để tự chạy khi Windows khởi động.
+`npm start` sẽ tự động:
+
+1. Build frontend và backend.
+2. Kiểm tra kết nối MongoDB trong tối đa 5 giây.
+3. Chỉ khởi động server nếu MongoDB hoạt động.
+
+Bạn cũng có thể kiểm tra riêng MongoDB bằng `npm run mongo:check`. Sau khi server chạy, mở `http://localhost:3001`. Có thể dùng Task Scheduler hoặc NSSM để tự chạy khi Windows khởi động.
 
 ## Tính năng
 

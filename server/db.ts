@@ -24,7 +24,7 @@ export type MediaDoc = {
 export type AlbumDoc = { id: string; user_id: string; name: string; created_at: string }
 export type AlbumMediaDoc = { album_id: string; media_id: string }
 
-export const mongo = new MongoClient(config.mongodbUri)
+export const mongo = new MongoClient(config.mongodbUri, { serverSelectionTimeoutMS: 5000 })
 export const database = mongo.db(config.mongodbDb)
 export const users: Collection<UserDoc> = database.collection('users')
 export const media: Collection<MediaDoc> = database.collection('media')
