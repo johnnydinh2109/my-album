@@ -1,48 +1,48 @@
-import Database from 'better-sqlite3'
-import fs from 'node:fs'
+import { MongoClient, type Collection } from 'mongodb'
 import path from 'node:path'
+import { config } from './config.js'
 
-const dbPath = process.env.DB_PATH || 'data/my-album.db'
-fs.mkdirSync(path.dirname(dbPath), { recursive: true })
-export const db = new Database(dbPath)
-db.pragma('journal_mode = WAL')
-db.pragma('foreign_keys = ON')
-db.exec(`
-CREATE TABLE IF NOT EXISTS users (
-  id TEXT PRIMARY KEY,
-  email TEXT NOT NULL UNIQUE COLLATE NOCASE,
-  name TEXT NOT NULL,
-  password_hash TEXT NOT NULL,
-  media_folder TEXT NOT NULL UNIQUE,
-  created_at TEXT NOT NULL
-);
-CREATE TABLE IF NOT EXISTS media (
-  id TEXT PRIMARY KEY,
-  user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  relative_path TEXT NOT NULL,
-  filename TEXT NOT NULL,
-  mime TEXT NOT NULL,
-  size INTEGER NOT NULL,
-  taken_at TEXT NOT NULL,
-  modified_at TEXT NOT NULL,
-  favorite INTEGER NOT NULL DEFAULT 0,
-  UNIQUE(user_id, relative_path)
-);
-CREATE INDEX IF NOT EXISTS idx_media_user_date ON media(user_id, taken_at DESC);
-CREATE TABLE IF NOT EXISTS albums (
-  id TEXT PRIMARY KEY,
-  user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  name TEXT NOT NULL,
-  created_at TEXT NOT NULL
-);
-CREATE TABLE IF NOT EXISTS album_media (
-  album_id TEXT NOT NULL REFERENCES albums(id) ON DELETE CASCADE,
-  media_id TEXT NOT NULL REFERENCES media(id) ON DELETE CASCADE,
-  PRIMARY KEY(album_id, media_id)
-);
-`)
+export type UserDoc = {
+  id: string
+  email: string
+  name: string
+  password_hash: string
+  media_folder: string
+  created_at: string
+}
+export type MediaDoc = {
+  id: string
+  user_id: string
+  relative_path: string
+  filename: string
+  mime: string
+  size: number
+  taken_at: string
+  modified_at: string
+  favorite: number
+}
+export type AlbumDoc = { id: string; user_id: string; name: string; created_at: string }
+export type AlbumMediaDoc = { album_id: string; media_id: string }
 
-export type UserRow = { id: string; email: string; name: string; password_hash: string; media_folder: string; created_at: string }
+export const mongo = new MongoClient(config.mongodbUri)
+export const database = mongo.db(config.mongodbDb)
+export const users: Collection<UserDoc> = database.collection('users')
+export const media: Collection<MediaDoc> = database.collection('media')
+export const albums: Collection<AlbumDoc> = database.collection('albums')
+export const albumMedia: Collection<AlbumMediaDoc> = database.collection('album_media')
+
+export const dbReady = (async () => {
+  await mongo.connect()
+  await Promise.all([
+    users.createIndex({ email: 1 }, { unique: true }),
+    users.createIndex({ media_folder: 1 }, { unique: true }),
+    media.createIndex({ user_id: 1, relative_path: 1 }, { unique: true }),
+    media.createIndex({ user_id: 1, taken_at: -1 }),
+    albums.createIndex({ user_id: 1, created_at: -1 }),
+    albumMedia.createIndex({ album_id: 1, media_id: 1 }, { unique: true }),
+  ])
+})()
+
 export function safeUserFolder(folder: string) {
   if (!folder || path.isAbsolute(folder) || folder.includes('..') || /[\\/]/.test(folder)) throw new Error('Invalid media folder')
   return folder

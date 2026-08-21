@@ -6,12 +6,12 @@ Web thư viện ảnh riêng tư kiểu Google Photos, chạy native trên Windo
 
 - React + Vite + TypeScript
 - Node.js + Express
-- SQLite (`better-sqlite3`)
+- MongoDB (official Node.js driver)
 - Argon2 (băm mật khẩu), JWT trong cookie HttpOnly
 
 ## Cài trên Windows
 
-Yêu cầu **Node.js 22 LTS**.
+Yêu cầu **Node.js 22 LTS hoặc Node.js 24 LTS** (`node --version` phải từ `v22` trở lên) và **MongoDB Community Server** đang chạy. Dự án không còn dùng native SQLite nên không cần Python, `node-gyp` hoặc Visual Studio Build Tools.
 
 ```powershell
 cd my-album
@@ -25,13 +25,17 @@ Mở `http://localhost:5173`.
 
 `npm run setup` sẽ tạo `.env` từ `.env.example`, rồi tự thay `BOOTSTRAP_SETUP_CODE` và `JWT_SECRET` mẫu bằng chuỗi ngẫu nhiên an toàn. Script không in secret ra terminal và không ghi đè secret thật đã tồn tại.
 
-Trong `.env`, bạn chỉ cần sửa thông tin ổ ảnh và email:
+Trong `.env`, cấu hình MongoDB, ổ ảnh và email:
 
 ```env
+MONGODB_URI=mongodb://127.0.0.1:27017
+MONGODB_DB=my_album
 PHOTOS_ROOT=D:/photos
 BOOTSTRAP_ADMIN_EMAIL=email-cua-ban@example.com
 BOOTSTRAP_ADMIN_FOLDER=admin
 ```
+
+Nếu dùng MongoDB Atlas, thay `MONGODB_URI` bằng connection string Atlas. Không commit connection string vào GitHub.
 
 ### Các script quản lý secret
 
@@ -87,9 +91,30 @@ Mở `http://localhost:3001`. Có thể dùng Task Scheduler hoặc NSSM để t
 - Xem ảnh/video toàn màn hình
 - Chọn nhiều và xóa vĩnh viễn khỏi ổ đĩa
 
+## Chuyển từ bản SQLite cũ
+
+Nếu đã từng chạy `npm install` với bản cũ, mở PowerShell trong thư mục dự án:
+
+```powershell
+git pull
+Remove-Item -Recurse -Force node_modules -ErrorAction SilentlyContinue
+npm install
+npm run setup
+npm run dev
+```
+
+Kiểm tra dịch vụ MongoDB local:
+
+```powershell
+Get-Service MongoDB
+Start-Service MongoDB
+```
+
+Nếu nhận lỗi `ECONNREFUSED 127.0.0.1:27017`, MongoDB chưa được cài/chưa chạy hoặc `MONGODB_URI` chưa đúng.
+
 ## Lưu ý an toàn
 
 - App hiện phù hợp chạy trong máy hoặc mạng gia đình đáng tin cậy.
 - Nếu mở ra Internet, đặt sau HTTPS reverse proxy, thêm rate-limit đăng nhập, xác minh email, CSRF token và backup định kỳ.
 - Việc xóa trong web là **xóa vĩnh viễn**, không đưa vào Recycle Bin.
-- Sao lưu `D:\photos` và file `data\my-album.db`.
+- Sao lưu `D:\photos` và database MongoDB `my_album`.

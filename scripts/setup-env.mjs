@@ -60,21 +60,38 @@ if (!existsSync(envPath)) {
 
 let text = readFileSync(envPath, 'utf8')
 const values = readValues(text)
+const exampleValues = readValues(readFileSync(examplePath, 'utf8'))
 const rotate = mode === 'rotate'
 let changed = false
+let configAdded = false
+let secretChanged = false
+
+// Khi .env.example có cấu hình mới (ví dụ MongoDB), tự thêm key còn thiếu
+// nhưng luôn giữ nguyên mọi giá trị người dùng đã cấu hình.
+for (const [key, value] of Object.entries(exampleValues)) {
+  if (!(key in values)) {
+    text = replaceValue(text, key, value)
+    values[key] = value
+    changed = true
+    configAdded = true
+  }
+}
 
 if (rotate || placeholders.has(values.BOOTSTRAP_SETUP_CODE || '')) {
   text = replaceValue(text, 'BOOTSTRAP_SETUP_CODE', secret(24))
   changed = true
+  secretChanged = true
 }
 if (rotate || placeholders.has(values.JWT_SECRET || '')) {
   text = replaceValue(text, 'JWT_SECRET', secret(48))
   changed = true
+  secretChanged = true
 }
 
 if (changed) {
   writeFileSync(envPath, text, { mode: 0o600 })
-  console.log(rotate ? 'Đã xoay BOOTSTRAP_SETUP_CODE và JWT_SECRET.' : 'Đã tự động tạo BOOTSTRAP_SETUP_CODE và JWT_SECRET.')
+  if (configAdded) console.log('Đã bổ sung các cấu hình mới còn thiếu từ .env.example.')
+  if (secretChanged) console.log(rotate ? 'Đã xoay BOOTSTRAP_SETUP_CODE và JWT_SECRET.' : 'Đã tự động tạo BOOTSTRAP_SETUP_CODE và JWT_SECRET.')
 } else {
   console.log('Các secret đã tồn tại; không thay đổi. Dùng npm run secrets:rotate nếu muốn tạo lại.')
 }
